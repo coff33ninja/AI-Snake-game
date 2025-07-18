@@ -27,7 +27,7 @@
 
  1.  **Clone the repository:**
      ```bash
-     git clone <your-repo-url>
+     git clone (https://github.com/coff33ninja/AI-Snake-game)
      cd AI-Snake-game
      ```
 
