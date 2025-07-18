@@ -34,11 +34,10 @@ GAME_MODES = {
     3: {'name': 'Time Attack', 'description': 'Highest score when time runs out wins'}
 }
 
-# Level configurations (kept for backward compatibility)
-LEVEL_CONFIG = {
-    1: {'speed': 0.15, 'obstacles': [], 'food_count': 1, 'name': 'Beginner'},
-    2: {'speed': 0.12, 'obstacles': [], 'food_count': 1, 'name': 'Easy'},
-    3: {'speed': 0.10, 'obstacles': [[10, 10], [10, 11], [10, 12]], 'food_count': 1, 'name': 'Medium'},
-    4: {'speed': 0.08, 'obstacles': [[10, 10], [10, 11], [10, 12], [15, 20], [15, 21]], 'food_count': 2, 'name': 'Hard'},
-    5: {'speed': 0.06, 'obstacles': [[10, 10], [10, 11], [10, 12], [15, 20], [15, 21], [25, 15], [25, 16]], 'food_count': 2, 'name': 'Expert'}
-}
+# Reward values
+REWARD_FOOD = 20
+REWARD_FOOD_P1 = -2
+REWARD_COLLISION = -10
+
+# Curses settings
+CURSES_TIMEOUT = 150

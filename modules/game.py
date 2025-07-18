@@ -18,8 +18,9 @@ import logging
 # Import from other modules
 from .ai import SnakeGameAI
 from .config import (DIFFICULTY_CONFIG, TURBO_DURATION, TURBO_COOLDOWN,
-                   TURBO_SPEED_MULTIPLIER, MIN_EXPLORATION_RATE, EXPLORATION_RATE,
-                   EXPLORATION_DECAY)
+                     TURBO_SPEED_MULTIPLIER, MIN_EXPLORATION_RATE, EXPLORATION_RATE,
+                     EXPLORATION_DECAY, REWARD_FOOD, REWARD_FOOD_P1, REWARD_COLLISION,
+                     CURSES_TIMEOUT)
 
 
 class GameState:
@@ -177,7 +178,7 @@ class GameState:
                     self.p1_score += 10
                     food_eaten = True
                     self.foods.pop(i)
-                    reward = -2  # Small penalty for AI when human gets food
+                    reward = REWARD_FOOD_P1
                     logging.info(f"P1 ate food! New score: {self.p1_score}")
 
                     # Check win condition for First to Score mode
@@ -191,7 +192,7 @@ class GameState:
                     self.p2_score += 10
                     food_eaten = True
                     self.foods.pop(i)
-                    reward = 20 if self.ai else 0  # Higher reward for AI getting food
+                    reward = REWARD_FOOD if self.ai else 0
                     logging.info(f"P2 ate food! New score: {self.p2_score}")
 
                     # Check win condition for First to Score mode
@@ -622,8 +623,8 @@ class GameEngine:
         self.p1_win = curses.newwin(self.height, self.width // 2 - 1, 0, 0)
         self.p2_win = curses.newwin(self.height, self.width // 2 - 1, 0, self.width // 2 + 1)
         self.p1_win.keypad(True)
-        self.p1_win.timeout(150)
-        self.p2_win.timeout(150)
+        self.p1_win.timeout(CURSES_TIMEOUT)
+        self.p2_win.timeout(CURSES_TIMEOUT)
 
         # Draw screen separator
         self.draw_separator()
@@ -686,7 +687,7 @@ class GameEngine:
             p1_collision, p2_collision = self.game_state.check_collisions()
 
             # Handle AI reward for collisions
-            reward = -10 if p2_collision else 0
+            reward = REWARD_COLLISION if p2_collision else 0
 
             # Check if food was eaten
             food_eaten, food_reward = self.game_state.check_food_eaten()

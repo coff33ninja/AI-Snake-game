@@ -1,0 +1,8 @@
+2025-07-18 17:06:43,604 - DEBUG - Selected difficulty: 5
+2025-07-18 17:06:52,945 - DEBUG - Selected game mode: 2
+2025-07-18 17:06:54,918 - INFO - Starting game with configuration: {'difficulty': 5, 'game_mode': 2, 'target_score': 100, 'game_time_minutes': 5, 'multiplayer_enabled': False}
+2025-07-18 17:06:58,424 - INFO - Game countdown completed
+2025-07-18 17:07:00,536 - DEBUG - Updated direction: 259
+2025-07-18 17:07:02,981 - INFO - P1 collision detected! Head: [0, 40]
+2025-07-18 17:07:03,568 - INFO - P2 collision detected! Head: [15, 58]
+2025-07-18 17:07:03,568 - INFO - Both players died! Winner: Tie
