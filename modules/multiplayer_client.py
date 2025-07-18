@@ -37,7 +37,7 @@ class MultiplayerClient:
             logging.error(f"Error getting server info: {e}")
             return None
 
-    def create_session(self, p1_type="human", p2_type="human"):
+    def create_session(self, p1_type="human", p2_type="human", ai_model=None):
         """Create a new game session"""
         try:
             response = requests.post(
@@ -45,13 +45,14 @@ class MultiplayerClient:
                 params={
                     "host_id": self.client_id,
                     "p1_type": p1_type,
-                    "p2_type": p2_type
+                    "p2_type": p2_type,
+                    "ai_model": ai_model
                 },
                 timeout=5
             )
             if response.status_code == 200:
                 data = response.json()
-                self.session_id = data["session_id"]
+                self.session_id = data["session"]["session_id"]
                 self.is_host = True
                 logging.info(f"Created session: {self.session_id}")
                 return data
@@ -60,6 +61,38 @@ class MultiplayerClient:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error creating session: {e}")
             return None
+
+    def get_ai_move(self, state):
+        """Get AI move from the server"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/ai/{self.session_id}/move",
+                json={"state": state},
+                timeout=1
+            )
+            if response.status_code == 200:
+                return response.json()["action"]
+            return None
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error getting AI move: {e}")
+            return None
+
+    def send_ai_training_data(self, state, action, reward, next_state, done):
+        """Send AI training data to the server"""
+        try:
+            requests.post(
+                f"{self.base_url}/ai/{self.session_id}/train",
+                json={
+                    "state": state,
+                    "action": action,
+                    "reward": reward,
+                    "next_state": next_state,
+                    "done": done
+                },
+                timeout=1
+            )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error sending AI training data: {e}")
 
     def join_session(self, session_id):
         """Join an existing game session"""

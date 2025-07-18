@@ -146,7 +146,8 @@ def show_startup_screen(stdscr):
                     'game_mode': selected_game_mode,
                     'target_score': target_score,
                     'game_time_minutes': game_time_minutes,
-                    'multiplayer_enabled': False
+                    'multiplayer_enabled': False,
+                    'play_again': False
                 }
             elif key == ord('q') or key == ord('Q'):
                 logging.info("User quit from startup screen")
@@ -234,17 +235,34 @@ def setup_lan_multiplayer(stdscr):
             stdscr.refresh()
 
             opponent_key = stdscr.getch()
+            ai_model = None
             if opponent_key == ord('1'):
                 opponent_type = "human"
             elif opponent_key == ord('2'):
                 opponent_type = "ai"
+                # AI model selection
+                stdscr.clear()
+                stdscr.addstr(2, 4, "Select AI Model:")
+                stdscr.addstr(4, 6, "1. Q-Learning (Classic)")
+                stdscr.addstr(5, 6, "2. DQN (Deep Q-Network)")
+                stdscr.addstr(7, 6, "ESC to go back")
+                stdscr.refresh()
+                model_key = stdscr.getch()
+                if model_key == ord('1'):
+                    ai_model = "q_learning"
+                elif model_key == ord('2'):
+                    ai_model = "dqn"
+                elif model_key == 27:  # ESC
+                    continue
+                else:
+                    continue
             elif opponent_key == 27:  # ESC
                 continue
             else:
                 continue
 
             from .utils import start_server_background
-            if not start_server_background():
+            if not start_server_background(with_ai=(opponent_type == "ai")):
                 stdscr.addstr(10, 4, "Failed to start multiplayer server!")
                 stdscr.addstr(11, 4, "Press any key to continue...")
                 stdscr.getch()
@@ -260,7 +278,7 @@ def setup_lan_multiplayer(stdscr):
                     logging.error("Failed to connect WebSocket for host")
                     continue
 
-                session_data = client.create_session(p1_type="human", p2_type=opponent_type)
+                session_data = client.create_session(p1_type="human", p2_type=opponent_type, ai_model=ai_model)
                 if not session_data:
                     stdscr.addstr(10, 4, "Failed to create session!")
                     stdscr.addstr(11, 4, "Press any key to continue...")

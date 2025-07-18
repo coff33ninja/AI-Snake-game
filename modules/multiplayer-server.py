@@ -63,7 +63,7 @@ class GameState(BaseModel):
 
 class AIStateInfo(BaseModel):
     """State information sent from the client to get an AI move."""
-    state: List[int] # The 11-element state vector
+    state: List[int]  # The 11-element state vector
 
 
 class AITrainingData(BaseModel):
@@ -89,7 +89,7 @@ class GameSession(BaseModel):
     client_id: Optional[str]
     p1_type: str  # "human" or "ai"
     p2_type: str  # "human" or "ai"
-    ai_model: Optional[str] = None # "q_learning" or "dqn"
+    ai_model: Optional[str] = None  # "q_learning" or "dqn"
     game_state: Optional[GameState]
     active: bool
     created_at: float
@@ -100,7 +100,7 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.sessions: Dict[str, GameSession] = {}
-        self.ai_agents: Dict[str, Any] = {} # Can store SnakeGameAI or DQNAgent
+        self.ai_agents: Dict[str, Any] = {}  # Can store SnakeGameAI or DQNAgent
 
     async def connect(self, websocket: WebSocket, client_id: str):
         await websocket.accept()
@@ -217,7 +217,7 @@ async def get_server_info():
 
 
 @app.post("/create_session")
-async def create_session(host_id: str, p1_type: str="human", p2_type: str="human", ai_model: Optional[str] = None):
+async def create_session(host_id: str, p1_type: str="human", p2_type: str="human", ai_model: Optional[str]=None):
     """Create a new game session"""
     session_id = f"session_{int(time.time())}_{random.randint(1000, 9999)}"
 
@@ -239,18 +239,18 @@ async def create_session(host_id: str, p1_type: str="human", p2_type: str="human
     # If the session is against an AI, create and store the AI agent instance
     if p2_type == "ai":
         if not SERVER_CONFIG["with_ai"]:
-            del manager.sessions[session_id] # Clean up before raising
+            del manager.sessions[session_id]  # Clean up before raising
             logging.error("Attempted to create AI session while AI hosting is disabled.")
             raise HTTPException(status_code=403, detail="Server not configured to host AI. Start with --with-ai flag.")
 
         if ai_model == "q_learning":
             agent = SnakeGameAI()
-            agent.load_q_table() # Load existing knowledge
+            agent.load_q_table()  # Load existing knowledge
             manager.ai_agents[session_id] = agent
             logging.info(f"Created Q-Learning AI agent for session {session_id}")
         elif ai_model == "dqn":
-            agent = DQNAgent(state_dim=11, action_dim=3) # Assuming 11 state features, 3 actions
-            agent.load_model(path=f"dqn_model_{host_id}.pth") # Load player-specific model
+            agent = DQNAgent(state_dim=11, action_dim=4)  # Assuming 11 state features, 4 actions
+            agent.load_model(path=f"dqn_model_{host_id}.pth")  # Load player-specific model
             manager.ai_agents[session_id] = agent
             logging.info(f"Created DQN AI agent for session {session_id}")
 
@@ -359,7 +359,7 @@ async def get_dqn_move(session_id: str, state_info: AIStateInfo):
 
     # The agent's select_action returns a tensor, e.g., tensor([[1]])
     action_tensor = agent.select_action(state_info.state)
-    action = action_tensor.item() # Convert to a standard Python integer
+    action = action_tensor.item()  # Convert to a standard Python integer
 
     return {"action": action, "action_tensor": action_tensor.tolist()}
 
@@ -387,7 +387,7 @@ async def train_dqn_step(session_id: str, data: DQNTrainingData):
     target_net_state_dict = agent.target_net.state_dict()
     policy_net_state_dict = agent.policy_net.state_dict()
     for key in policy_net_state_dict:
-        target_net_state_dict[key] = policy_net_state_dict[key]*0.005 + target_net_state_dict[key]*(1-0.005)
+        target_net_state_dict[key] = policy_net_state_dict[key] * 0.005 + target_net_state_dict[key] * (1 - 0.005)
     agent.target_net.load_state_dict(target_net_state_dict)
 
     return {"status": "training_step_received"}
@@ -466,6 +466,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
     except WebSocketDisconnect:
         await manager.handle_disconnect(client_id)
+
 
 @app.get("/health")
 async def health_check():

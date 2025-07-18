@@ -43,6 +43,7 @@ class GameState:
         self.game_ended = False
         self.game_over = False  # Renamed from game_ended for clarity
         self.win_condition = None
+        self.play_again = False
 
         # Player states
         self.p1_game_over = False
@@ -83,7 +84,7 @@ class GameState:
 
         # AI
         self.ai = None
-        if config.get('p2_type') == 'ai' or not config.get('multiplayer_enabled', False):
+        if config.get('p2_type') == 'ai' and not config.get('multiplayer_enabled', False):
             self.ai = SnakeGameAI(height, self.width_p)
             logging.info("Initialized AI for Player 2")
 
@@ -406,7 +407,13 @@ class GameEngine:
         # Calculate P2 new position
         if not self.game_state.p2_game_over:
             p2_head = self.game_state.p2_snake[0].copy()
-            if self.game_state.ai:  # If P2 is AI
+            if self.is_multiplayer and self.config.get('p2_type') == 'ai':
+                # Server-hosted AI
+                p2_state = self.game_state.ai.get_state(self.game_state.p2_snake, self.game_state.foods[0] if self.game_state.foods else [0, 0], self.game_state.p2_direction, self.game_state.obstacles)
+                p2_action = self.multiplayer_client.get_ai_move(p2_state)
+                if p2_action is not None:
+                    self.game_state.p2_direction = p2_action
+            elif self.game_state.ai:  # If P2 is local AI
                 closest_food = self.game_state.foods[0] if self.game_state.foods else [0, 0]
                 if len(self.game_state.foods) > 1:
                     p2_head_current = self.game_state.p2_snake[0]
@@ -432,7 +439,12 @@ class GameEngine:
 
     def update_ai_learning(self, reward):
         """Update AI learning based on game state"""
-        if self.game_state.ai and not self.game_state.p2_game_over:
+        if self.is_multiplayer and self.config.get('p2_type') == 'ai':
+            # Server-hosted AI
+            p2_state = self.game_state.ai.get_state(self.game_state.p2_snake, self.game_state.foods[0] if self.game_state.foods else [0, 0], self.game_state.p2_direction, self.game_state.obstacles)
+            p2_next_state = self.game_state.ai.get_state(self.game_state.p2_snake, self.game_state.foods[0] if self.game_state.foods else [0, 0], self.game_state.p2_direction, self.game_state.obstacles)
+            self.multiplayer_client.send_ai_training_data(p2_state, self.game_state.p2_direction, reward, p2_next_state, self.game_state.p2_game_over)
+        elif self.game_state.ai and not self.game_state.p2_game_over:
             closest_food = self.game_state.foods[0] if self.game_state.foods else [0, 0]
             if len(self.game_state.foods) > 1:
                 p2_head_current = self.game_state.p2_snake[0]
@@ -575,9 +587,16 @@ class GameEngine:
             elif self.config['game_mode'] == 3:
                 self.stdscr.addstr(self.height // 2 + 3, self.width // 2 - 12, f"Game Time: {self.config['game_time_minutes']} minutes")
 
-            self.stdscr.addstr(self.height // 2 + 5, self.width // 2 - 12, "Press any key to exit...")
+            self.stdscr.addstr(self.height // 2 + 5, self.width // 2 - 12, "Press 'P' to Play Again or 'Q' to Quit.")
             self.stdscr.refresh()
-            self.stdscr.getch()
+            while True:
+                key = self.stdscr.getch()
+                if key == ord('p') or key == ord('P'):
+                    self.game_state.play_again = True
+                    break
+                elif key == ord('q') or key == ord('Q'):
+                    self.game_state.play_again = False
+                    break
         except curses.error:
             pass
 
